@@ -75,4 +75,5 @@ class LabelPermutedEMNIST:
         self._get_dataset()
         self.dataset.targets = self._apply_permutation(self.dataset.targets)
         self.data_loader = self._get_data_loader()
-    
+
+
