@@ -7,18 +7,18 @@ import torch
 
 
 def get_root_dir() -> Path:
+    """Returns the root directory of the project."""
     return Path(__file__).parent.parent.resolve()
 
 
 def mkdir(dir_path: Path):
+    """Make the given directory."""
     if dir_path.is_dir():
         dir_path.mkdir()
 
 
 def seed_everything(seed: int):
-    """
-    Set seed of the entire environment.
-    """
+    """Set seed of the entire environment."""
     # Standard Python3 library-related
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
@@ -33,3 +33,6 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = False
 
 
+class Logger:
+    def __init__(self,):
+        pass

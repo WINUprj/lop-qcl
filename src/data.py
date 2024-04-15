@@ -36,6 +36,7 @@ class LabelPermutedEMNIST:
         return self
 
     def __next__(self):
+        # Update label permutation after one task ends
         if self.step % self.update_freq == 0:
             self._permute()
         self.step += 1
@@ -43,6 +44,7 @@ class LabelPermutedEMNIST:
         try:
             return next(self.data_loader)
         except StopIteration:
+            # Regenerate the data loader if current loader exhaust the data
             self.data_loader = self._get_data_loader()
             return next(self.iterator)
     
@@ -68,7 +70,7 @@ class LabelPermutedEMNIST:
         )
 
     def _apply_permutation(self, x):
-        return self.permutation[x-1]    # Subtracting 1 since target index starts from 1
+        return self.permutation[x-1]    # Subtracting 1 since target index follows 1-based indexing
     
     def _permute(self):
         self.permutation = torch.randperm(self.out_dim)

@@ -5,9 +5,7 @@ import pennylane as qml
 
 
 def VariationalAnsatz(weights):
-    """
-    Subroutine for the custom variatioanl ansatz.
-    """
+    """Subroutine template for the custom variatioanl ansatz."""
     if isinstance(weights, torch.Tensor):
         n_layers = weights.size()[0]
         n_wires = weights.size()[1]
@@ -41,6 +39,7 @@ def VariationalAnsatz(weights):
 
 
 def get_qnn(n_layers: int, n_wires: int):
+    """Function which returns the qnn function and the shape of the learnable parameters."""
     def custom_vqc(inputs, weights):
         if isinstance(weights, torch.Tensor):
             n_wires = weights.size()[1]
