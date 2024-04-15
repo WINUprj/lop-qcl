@@ -66,7 +66,7 @@ class TorchHybridModel(nn.Module):
     ):
         super(TorchHybridModel, self).__init__()
 
-        dev = qml.device(qpu_device, wires=8, torch_device=torch_device)
+        dev = qml.device(qpu_device, wires=n_wires, torch_device=torch_device)
         qnn, qnn_weight_shape = get_qnn(n_qnn_layers, n_wires)
         qnode = qml.QNode(qnn, dev, interface="torch")
         self.q_layer = qml.qnn.TorchLayer(qnode, qnn_weight_shape)
