@@ -1,10 +1,53 @@
+from pathlib import Path
+
 import torch
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Dataset
 import torchvision
 from torchvision.transforms import v2 as T
 
 from src.util import get_root_dir
 
+
+class LetterEMNIST(Dataset):
+    def __init__(
+        self,
+        data_root_dir,
+        train,
+        transforms,
+        label_subset = None,
+    ):
+        original_emnist = torchvision.datasets.EMNIST(
+            data_root_dir,
+            split="letters",
+            train=train,
+        )
+
+        self.transforms = transforms
+
+        if label_subset is None:
+            self.images = original_emnist.data
+            self.labels = original_emnist.targets
+        else:
+            # Collect subset of data
+            original_targets = original_emnist.targets
+            subset_idx = original_targets == label_subset[0]
+            for l in label_subset[1:]:
+                subset_idx |= original_targets == l
+            
+            self.images = original_emnist.data[subset_idx, :]
+            self.labels = original_targets[subset_idx]
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, idx):
+        images = self.images[idx, :]
+        if self.transforms is not None:
+            images = self.transforms(images)
+        labels = self.labels[idx]
+        
+        return images, labels
+        
 
 class LabelPermutedEMNIST:
     """
@@ -19,6 +62,8 @@ class LabelPermutedEMNIST:
         shuffle=True,
         update_freq=1000,
         batch_size=1,
+        img_transform=None,
+        label_subset=None,
     ):
         self.dataset_root = dataset_root
         self.in_dim = in_dim
@@ -27,6 +72,8 @@ class LabelPermutedEMNIST:
         self.shuffle = shuffle
         self.update_freq = update_freq
         self.batch_size = batch_size
+        self.img_transform=None,
+        self.label_subset=None,
 
         self.step = 0
         self.permutation = torch.randperm(self.out_dim)
@@ -56,18 +103,10 @@ class LabelPermutedEMNIST:
         ))
     
     def _get_dataset(self):
-        self.dataset = torchvision.datasets.EMNIST(
-            self.dataset_root,
-            split="letters",
-            train=self.train,
-            transform=T.Compose([
-                T.ToImage(),
-                T.ToDtype(torch.float32, scale=True),
-                T.Resize(self.in_dim),
-                T.Normalize((0.5,), (0.5,)),
-                T.Lambda(lambda x: x.flatten()),
-            ]),
-        )
+        self.dataset = LetterEMNIST(self.dataset_root,
+                                    self.train,
+                                    self.transforms,
+                                    self.label_subset)
 
     def _apply_permutation(self, x):
         return self.permutation[x-1]    # Subtracting 1 since target index follows 1-based indexing
@@ -77,5 +116,4 @@ class LabelPermutedEMNIST:
         self._get_dataset()
         self.dataset.targets = self._apply_permutation(self.dataset.targets)
         self.data_loader = self._get_data_loader()
-
 
