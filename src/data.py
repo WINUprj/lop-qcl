@@ -26,25 +26,31 @@ class LetterEMNIST(Dataset):
 
         if label_subset is None:
             self.images = original_emnist.data
-            self.labels = original_emnist.targets
+            self.targets = original_emnist.targets
         else:
-            # Collect subset of data
+            # Collect subset index of the data
             original_targets = original_emnist.targets
-            subset_idx = original_targets == label_subset[0]
+            subset_idx = (original_targets == label_subset[0])
             for l in label_subset[1:]:
-                subset_idx |= original_targets == l
-            
+                subset_idx |= (original_targets == l)
+            subset_dict = {label_subset[i]: i for i in range(len(label_subset))}
+                
             self.images = original_emnist.data[subset_idx, :]
-            self.labels = original_targets[subset_idx]
+            self.targets = original_targets[subset_idx]
+            fn = lambda x: subset_dict[x]
+            self.targets = self.targets.apply_(fn)
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.targets)
 
     def __getitem__(self, idx):
         images = self.images[idx, :]
+        if images.ndim <= 2:
+            images = images.unsqueeze(0)
         if self.transforms is not None:
             images = self.transforms(images)
-        labels = self.labels[idx]
+            
+        labels = self.targets[idx]
         
         return images, labels
         
@@ -72,8 +78,8 @@ class LabelPermutedEMNIST:
         self.shuffle = shuffle
         self.update_freq = update_freq
         self.batch_size = batch_size
-        self.img_transform=None,
-        self.label_subset=None,
+        self.img_transform=img_transform
+        self.label_subset=label_subset
 
         self.step = 0
         self.permutation = torch.randperm(self.out_dim)
@@ -93,7 +99,7 @@ class LabelPermutedEMNIST:
         except StopIteration:
             # Regenerate the data loader if current loader exhaust the data
             self.data_loader = self._get_data_loader()
-            return next(self.iterator)
+            return next(self.data_loader)
     
     def _get_data_loader(self):
         return iter(DataLoader(
@@ -105,7 +111,7 @@ class LabelPermutedEMNIST:
     def _get_dataset(self):
         self.dataset = LetterEMNIST(self.dataset_root,
                                     self.train,
-                                    self.transforms,
+                                    self.img_transform,
                                     self.label_subset)
 
     def _apply_permutation(self, x):
