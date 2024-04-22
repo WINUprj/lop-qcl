@@ -82,8 +82,6 @@ class LabelPermutedEMNIST:
         self.label_subset=label_subset
 
         self.step = 0
-        self.permutation = torch.randperm(self.out_dim)
-        self._get_dataset()
 
     def __iter__(self):
         return self
@@ -91,7 +89,7 @@ class LabelPermutedEMNIST:
     def __next__(self):
         # Update label permutation after one task ends
         if self.step % self.update_freq == 0:
-            self._permute()
+            self.permute()
         self.step += 1
 
         try:
@@ -117,7 +115,7 @@ class LabelPermutedEMNIST:
     def _apply_permutation(self, x):
         return self.permutation[x-1]    # Subtracting 1 since target index follows 1-based indexing
     
-    def _permute(self):
+    def permute(self):
         self.permutation = torch.randperm(self.out_dim)
         self._get_dataset()
         self.dataset.targets = self._apply_permutation(self.dataset.targets)

@@ -80,3 +80,23 @@ class TorchHybridModel(nn.Module):
         x = self.q_layer(x)
         x = self.fc_layer(x)
         return x
+
+
+class ClassicalReLUFCNN(nn.Module):
+    def __init__(self, layer_sizes):
+        super(ClassicalReLUFCNN, self).__init__()
+        
+        if len(layer_sizes) < 2:
+            raise ValueError("At least input and output shapes must be specified.")
+
+        layers = []
+        for l in range(len(layer_sizes) - 1):
+            layers.append(nn.Linear(layer_sizes[l], layer_sizes[l+1]))
+            if l < len(layer_sizes) - 2:
+                layers.append(nn.ReLU())
+        
+        self.fc_layer = nn.Sequential(*layers)
+    
+    def forward(self, x):
+        return self.fc_layer(x)
+
