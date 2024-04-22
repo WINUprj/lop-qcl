@@ -1,0 +1,28 @@
+{
+    "seed": 42,
+    "device": "cpu",
+    "task_name": "LabelPermutedEMNIST",
+    "task_params": {
+        "dataset_root": "dataset/EMNIST",
+        "in_dim": [16, 16],
+        "out_dim": 3,
+        "train": true,
+        "shuffle": true,
+        "update_freq": 50,
+        "batch_size": 64,
+        "label_subset": [24, 25, 26],
+    },
+    "model_name": "TorchHybridModel",
+    "model_params": {
+        "out_shape": 3,
+        "n_qnn_layers": 10,
+        "n_wires": 8,
+        "n_hidden_neurons": 64,
+        "qpu_device": "default.qubit.torch",
+    },
+    "optimizer": "Adam",
+    "step_size": 0.01,
+    "loss": "cross_entropy",
+    "n_runs": 5,
+    "n_timesteps": 500,
+}
