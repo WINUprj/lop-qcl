@@ -60,7 +60,8 @@ def main():
 
     # Device
     torch_device = torch.device(orig_cfg["device"])
-    orig_cfg["model_params"]["torch_device"] = orig_cfg["device"]
+    if orig_cfg["model_name"] != "ClassicalReLUFCNN":
+        orig_cfg["model_params"]["torch_device"] = orig_cfg["device"]
 
     # Run training
     for cfg in hyperparam_searcher:
