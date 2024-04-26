@@ -17,6 +17,7 @@ from src.util import (
 
 
 def train_single_run(cfg, task, model, optimizer, loss_fn, torch_device):
+    """Training loop for a single run."""
     losses = np.zeros(cfg["n_timesteps"])
     accuracies = np.zeros(cfg["n_timesteps"])
     
@@ -65,6 +66,7 @@ def main():
 
     # Run training
     for cfg in hyperparam_searcher:
+        print(cfg)
         # Make directory for each hyperparameters
         if len(search_keys) > 0:
             dir_name = create_hyperparam_dirname(search_keys, cfg)
@@ -76,11 +78,13 @@ def main():
         for run in tqdm(range(1, cfg["n_runs"] + 1)):
             seed_everything(seeds[run-1])
 
+            # Get all the components
             task = TASKS[cfg["task_name"]](**cfg["task_params"])
             model = MODELS[cfg["model_name"]](**cfg["model_params"])
             optimizer = OPTIMS[cfg["optimizer"]](model.parameters(), cfg["step_size"])
             loss_fn = LOSSES[cfg["loss"]]
 
+            # Get result of the training and save
             res_dict = train_single_run(cfg, task, model, optimizer, loss_fn, torch_device)
             
             for k, v in res_dict.items():

@@ -22,15 +22,30 @@ def mkdir(dir_path: Path):
         dir_path.mkdir(parents=True)
 
 
-def create_hyperparam_dirname(search_keys: list, cfg: dict):
+def create_hyperparam_dirname(search_keys: list, cfg: dict) -> str:
+    """Construct the directory name for saving the results from the runs with specific hyperparamter settings."""
     dirname = ""
-    for i, key in search_keys:
-        dirname += f"{key}_{cfg[key]}{'_' if i < len(search_keys) - 1 else ''}"
+    for i, key in enumerate(search_keys):
+        arguments = key.split('.')
+        if len(arguments) == 1:
+            dirname += f"{key}_{cfg[arguments[0]]}{'_' if i < len(search_keys) - 1 else ''}"
+        else:
+            dirname += f"{key}_{cfg[arguments[0]][arguments[1]]}{'_' if i < len(search_keys) - 1 else ''}"
     
     return dirname
 
 
-def seed_everything(seed: int):
+# From: https://stackoverflow.com/questions/10399614/accessing-value-inside-nested-dictionaries
+def get_nested(dic: dict, *args):
+    """Get the value from nested dictionary."""
+    if args and dic:
+        key = args[0]
+        if key:
+            value = dic[key]
+            return value if len(args) == 1 else get_nested(value, *args[1:])
+
+
+def seed_everything(seed: int) -> None:
     """Set seed of the entire environment."""
     # Standard Python3 library-related
     os.environ["PYTHONHASHSEED"] = str(seed)
@@ -46,17 +61,20 @@ def seed_everything(seed: int):
     torch.backends.cudnn.benchmark = False
 
 
-def moving_avg(data: np.ndarray, n: int):
+def moving_avg(data: np.ndarray, n: int) -> np.ndarray:
+    """Compute moving average of the given array with given window size."""
     cs = np.cumsum(data)
     diff = cs[n:] - cs[:-n]
     return diff / n
 
 
-def accuracy(pred, label):
+def accuracy(pred, label) -> float:
+    """Compute the accuracy of probabilistic predictions."""
     return np.sum(pred.argmax(axis=1) == label) / pred.shape[0]
 
 
 def parse_and_process_cfg():
+    """Preprocess the raw config dict."""
     # Parse input arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--config_file", "-c", type=str, default="./configs/default.json", help="Path to the config file for the experiments")
@@ -88,12 +106,15 @@ class HyperParamSearcher():
         self.cfg = cfg
         self.search_keys = search_keys
         
+        # Produce all the combinations of hyperparmeters to search through
         if len(self.search_keys) > 0:
             value_lists = []
             for k in self.search_keys:
-                assert isinstance(self.cfg[k], list), "Searchable parameters must be in the list format"
-                value_lists.append(self.cfg[k])
-            self.search_values = itertools.product(*value_lists)
+                arguments = k.split('.')
+                val = get_nested(self.cfg, *arguments)
+                assert isinstance(val, list), "Searchable parameters must be in the list format"
+                value_lists.append(val)
+            self.search_values = list(itertools.product(*value_lists))
         else:
             self.search_values = [None]
 
@@ -104,6 +125,7 @@ class HyperParamSearcher():
 
     def __next__(self):
         try:
+            # Return the config with next possible hyperparamter settings
             cp_cfg = copy.deepcopy(self.cfg)
             h_values = self.search_values[self.idx]
             self.idx += 1
@@ -111,7 +133,11 @@ class HyperParamSearcher():
                 return cp_cfg
             else:
                 for i, k in enumerate(self.search_keys):
-                    cp_cfg[k] = h_values[i]
+                    arguments = k.split('.')
+                    if len(arguments) == 1:
+                        cp_cfg[arguments[0]] = h_values[i]
+                    else:
+                        cp_cfg[arguments[0]][arguments[1]] = h_values[i]
                 return cp_cfg
         except IndexError:
             raise StopIteration()

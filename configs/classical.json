@@ -6,21 +6,21 @@
     "task_params": {
         "dataset_root": "dataset",
         "in_dim": [16, 16],
-        "out_dim": 3,
+        "out_dim": 4,
         "train": true,
         "shuffle": true,
-        "update_freq": 50,
+        "update_freq": 100,
         "batch_size": 64,
-        "label_subset": [24, 25, 26]
+        "label_subset": [23, 24, 25, 26]
     },
     "model_name": "ClassicalReLUFCNN",
     "model_params": {
-        "layer_sizes": [256, 512, 3]
+        "layer_sizes": [256, 300, 150, 4]
     },
-    "search_keys": [],
+    "search_keys": ["step_size"],
     "optimizer": "Adam",
-    "step_size": 0.01,
+    "step_size": [0.1, 0.01, 0.001, 0.0001, 0.00001],
     "loss": "cross_entropy",
     "n_runs": 5,
-    "n_timesteps": 500
+    "n_timesteps": 1000
 }

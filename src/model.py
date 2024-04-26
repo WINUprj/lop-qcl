@@ -31,11 +31,11 @@ def VariationalAnsatz(weights):
     
         # Rotation layer
         for r in range(n_wires):
-            for c in range(2):
-                if c == 0:
-                    qml.RX(weights[layer, r, c], wires=r)
-                else:
-                    qml.RZ(weights[layer, r, c], wires=r)
+            qml.RZ(weights[layer, r, 2], wires=r)
+    
+    # Perform RX on each qubits
+    for r in range(n_wires):
+        qml.RX(weights[-1, r, 0], wires=r)
 
 
 def get_qnn(n_layers: int, n_wires: int):
@@ -55,6 +55,7 @@ def get_qnn(n_layers: int, n_wires: int):
 
 
 class TorchHybridModel(nn.Module):
+    """Quantum-classical hybrid model."""
     def __init__(
         self,
         out_shape: int,
@@ -66,10 +67,13 @@ class TorchHybridModel(nn.Module):
     ):
         super(TorchHybridModel, self).__init__()
 
+        # Construct the Torch layer for the Variational Ansatz
         dev = qml.device(qpu_device, wires=n_wires, torch_device=torch_device)
         qnn, qnn_weight_shape = get_qnn(n_qnn_layers, n_wires)
         qnode = qml.QNode(qnn, dev, interface="torch")
         self.q_layer = qml.qnn.TorchLayer(qnode, qnn_weight_shape)
+
+        # Define postprocessing classical ANN
         self.fc_layer = nn.Sequential(
             nn.Linear(n_wires, n_hidden_neurons),
             nn.ReLU(),
@@ -83,12 +87,14 @@ class TorchHybridModel(nn.Module):
 
 
 class ClassicalReLUFCNN(nn.Module):
+    """Classical fully-connected ReLU activated NN."""
     def __init__(self, layer_sizes):
         super(ClassicalReLUFCNN, self).__init__()
         
         if len(layer_sizes) < 2:
             raise ValueError("At least input and output shapes must be specified.")
 
+        # Construct the fully connected classical model with ReLU activations
         layers = []
         for l in range(len(layer_sizes) - 1):
             layers.append(nn.Linear(layer_sizes[l], layer_sizes[l+1]))

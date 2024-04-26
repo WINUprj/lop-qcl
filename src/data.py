@@ -8,7 +8,8 @@ from torchvision.transforms import v2 as T
 from src.util import get_root_dir
 
 
-class LetterEMNIST(Dataset):
+class CustomLetterEMNIST(Dataset):
+    """Customized letter EMNIST dataset."""
     def __init__(
         self,
         data_root_dir,
@@ -16,6 +17,7 @@ class LetterEMNIST(Dataset):
         transforms,
         label_subset = None,
     ):
+        # Get the original letter EMNIST data
         original_emnist = torchvision.datasets.EMNIST(
             data_root_dir,
             split="letters",
@@ -33,10 +35,18 @@ class LetterEMNIST(Dataset):
             subset_idx = (original_targets == label_subset[0])
             for l in label_subset[1:]:
                 subset_idx |= (original_targets == l)
-            subset_dict = {label_subset[i]: i for i in range(len(label_subset))}
                 
+            subset_dict = {label_subset[i]: i for i in range(len(label_subset))}
+
             self.images = original_emnist.data[subset_idx, :]
             self.targets = original_targets[subset_idx]
+
+            # Only take half of the overall data
+            half_idx = torch.randperm(self.targets.size()[0] // 2)
+            self.images = self.images[half_idx]
+            self.targets = self.targets[half_idx]
+
+            # Convert the value of label indices to allow training
             fn = lambda x: subset_dict[x]
             self.targets = self.targets.apply_(fn)
 
@@ -56,9 +66,7 @@ class LetterEMNIST(Dataset):
         
 
 class LabelPermutedEMNIST:
-    """
-    Label permuted EMNIST task.
-    """
+    """Label permuted EMNIST task."""
     def __init__(
         self,
         dataset_root,
@@ -100,6 +108,7 @@ class LabelPermutedEMNIST:
             return next(self.data_loader)
     
     def _get_data_loader(self):
+        # Generate new dataloader
         return iter(DataLoader(
             self.dataset,
             self.batch_size,
@@ -107,15 +116,17 @@ class LabelPermutedEMNIST:
         ))
     
     def _get_dataset(self):
-        self.dataset = LetterEMNIST(self.dataset_root,
-                                    self.train,
-                                    self.img_transform,
-                                    self.label_subset)
+        # Redefine the dataset
+        self.dataset = CustomLetterEMNIST(self.dataset_root,
+                                          self.train,
+                                          self.img_transform,
+                                          self.label_subset)
 
     def _apply_permutation(self, x):
         return self.permutation[x-1]    # Subtracting 1 since target index follows 1-based indexing
     
     def permute(self):
+        # Permute the labels and redefine the dataset/dataloader
         self.permutation = torch.randperm(self.out_dim)
         self._get_dataset()
         self.dataset.targets = self._apply_permutation(self.dataset.targets)
