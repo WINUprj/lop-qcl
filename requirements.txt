@@ -3,3 +3,8 @@ torch
 torchvision
 tqdm
 pennylane
+pennylane-qiskit
+jupyter
+opencv-python
+scikit-image
+matplotlib
