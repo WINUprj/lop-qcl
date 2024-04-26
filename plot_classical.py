@@ -17,7 +17,7 @@ if __name__ == "__main__":
     mkdir(cfg["plot_dir"])
 
     # NOTE: Manually specify the result directories to use in plots
-    exp_dirs = [cfg["exp_dir"], cfg["root_dir"] / "results/classical_test2", cfg["root_dir"] / "results/classical_test4"]
+    exp_dirs = [cfg["exp_dir"], cfg["root_dir"] / "results/classical3", cfg["root_dir"] / "results/classical5"]
 
     cmap = [plt.cm.tab20(i) for i in range(0, 10*len(exp_dirs), 2)]
     fig, ax = plt.subplots(3, 5, figsize=(20, 15))
