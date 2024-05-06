@@ -79,5 +79,8 @@ Jupyter lab can be activated by running the following code:
 jupyter lab
 ```
 
+# Report
+The report can be found in `lop_qcl_report.pdf`.
+
 # Special Mention
 - Qingfeng Lan. Variational Quantum Soft Actor-Critic. arXiv preprint arXiv:2112.11921, 2021 [[Code](https://github.com/qlan3/QuantumExplorer)]
